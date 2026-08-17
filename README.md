@@ -18,14 +18,14 @@ a local Hugging Face model, and prints a bulleted summary.
 ## Setup
 
 ```powershell
-python -m venv venv
-venv\Scripts\pip install -r requirements.txt
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
 ```
 
 ## Usage
 
 ```powershell
-venv\Scripts\python main.py "https://www.youtube.com/watch?v=VIDEO_ID"
+.venv\Scripts\python main.py "https://www.youtube.com/watch?v=VIDEO_ID"
 ```
 
 Also accepts a bare video ID, a `youtu.be/...` link, or a `/shorts/...` link.
