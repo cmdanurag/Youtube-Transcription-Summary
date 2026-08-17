@@ -1,9 +1,19 @@
 """Fetch and chunk YouTube video transcripts."""
 
+import os
 from urllib.parse import urlparse, parse_qs
 
+from dotenv import load_dotenv
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+from youtube_transcript_api._errors import (
+    CouldNotRetrieveTranscript,
+    RequestBlocked,
+    TranscriptsDisabled,
+    NoTranscriptFound,
+)
+from youtube_transcript_api.proxies import WebshareProxyConfig
+
+load_dotenv()
 
 
 def extract_video_id(url_or_id: str) -> str:
@@ -21,14 +31,34 @@ def extract_video_id(url_or_id: str) -> str:
     return url_or_id
 
 
+def _get_proxy_config():
+    """Builds a Webshare proxy config from env vars, if credentials are set.
+    Falls back to None (direct connection), which risks YouTube's IP blocks.
+    """
+    username = os.environ.get("WEBSHARE_PROXY_USERNAME")
+    password = os.environ.get("WEBSHARE_PROXY_PASSWORD")
+    if username and password:
+        return WebshareProxyConfig(proxy_username=username, proxy_password=password)
+    return None
+
+
 def fetch_transcript(video_id: str) -> str:
     """Returns the full transcript as one plain-text string."""
     try:
-        segments = YouTubeTranscriptApi().fetch(video_id)
+        api = YouTubeTranscriptApi(proxy_config=_get_proxy_config())
+        segments = api.fetch(video_id)
     except TranscriptsDisabled:
         raise RuntimeError(f"Transcripts are disabled for video '{video_id}'.")
     except NoTranscriptFound:
         raise RuntimeError(f"No transcript found for video '{video_id}'.")
+    except RequestBlocked:
+        raise RuntimeError(
+            "YouTube is blocking requests from this IP. Set WEBSHARE_PROXY_USERNAME "
+            "and WEBSHARE_PROXY_PASSWORD in your .env file to route through a proxy "
+            "(see README), or wait and try again later."
+        )
+    except CouldNotRetrieveTranscript as e:
+        raise RuntimeError(f"Could not retrieve a transcript for '{video_id}': {e}")
     return " ".join(segment.text for segment in segments)
 
 

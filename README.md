@@ -40,3 +40,18 @@ one-time cost — later runs start faster.
   of crashing.
 - The model, chunk size, and summary length are all adjustable constants at
   the top of [summarize.py](summarize.py) and [transcript.py](transcript.py).
+
+## If YouTube blocks your IP
+
+`youtube-transcript-api` works by scraping the video page rather than using
+an official API, so YouTube sometimes blocks the requesting IP after enough
+calls (you'll see an `IpBlocked`/`RequestBlocked` error). Fixes, in order of
+effort:
+
+1. Wait — blocks are often temporary.
+2. Route requests through a proxy: copy `.env.example` to `.env`, sign up at
+   [Webshare](https://www.webshare.io/) and purchase a "Residential" proxy
+   package (not "Proxy Server" or "Static Residential"), then fill in
+   `WEBSHARE_PROXY_USERNAME` and `WEBSHARE_PROXY_PASSWORD` in `.env` with the
+   credentials from your [Webshare proxy settings](https://dashboard.webshare.io/proxy/settings).
+   The script picks these up automatically via `python-dotenv`.
